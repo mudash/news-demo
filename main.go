@@ -9,10 +9,14 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/freshman-tech/news-demo/news"
 	"github.com/joho/godotenv"
+
+	"gopkg.in/launchdarkly/go-sdk-common.v2/lduser"
+	ld "gopkg.in/launchdarkly/go-server-sdk.v5"
 )
 
 var tpl = template.Must(template.ParseFiles("index.html"))
@@ -58,6 +62,33 @@ func searchHandler(newsapi *news.Client) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		ldKey := os.Getenv("LD_SDK_KEY")
+		if ldKey == "" {
+			log.Fatal("Env: ldKey must be set")
+		}
+
+		ldClient, _ := ld.MakeClient(ldKey, 5*time.Second)
+		if ldClient.Initialized() {
+			log.Println("Launch Darkly SDK successfully initialized!")
+		} else {
+			log.Fatal("Launch Darkly SDK failed to initialize")
+			os.Exit(1)
+		}
+
+		flagValue, err := ldClient.BoolVariation("maxPageItems10", getUser(r), false)
+		if err != nil {
+			log.Fatal("error: " + err.Error())
+		}
+		log.Println("Current Page size is: ", newsapi.PageSize)
+
+		if flagValue {
+			newsapi.PageSize = 10
+			log.Println("Feature flag is turned ON")
+		} else {
+			log.Println("Feature flag is OFF")
+			newsapi.PageSize = default_item_count
+		}
+		log.Println("Page size after flag evaluation is: ", newsapi.PageSize)
 
 		params := u.Query()
 		searchQuery := params.Get("q")
@@ -100,6 +131,8 @@ func searchHandler(newsapi *news.Client) http.HandlerFunc {
 	}
 }
 
+const default_item_count = 50
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -117,7 +150,7 @@ func main() {
 	}
 
 	myClient := &http.Client{Timeout: 10 * time.Second}
-	newsapi := news.NewClient(myClient, apiKey, 20)
+	newsapi := news.NewClient(myClient, apiKey, default_item_count)
 
 	fs := http.FileServer(http.Dir("assets"))
 
@@ -125,5 +158,26 @@ func main() {
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 	mux.HandleFunc("/search", searchHandler(newsapi))
 	mux.HandleFunc("/", indexHandler)
+	log.Println("Open a browser and navigate to loacalhost:", port)
 	http.ListenAndServe(":"+port, mux)
+}
+
+func getUserAgent(r *http.Request) string {
+	ua := r.UserAgent()
+	return ua
+}
+
+func getUser(r *http.Request) lduser.User {
+
+	var userKey = "non-chrome-user"
+	ua := getUserAgent(r)
+	log.Println("user agent is: ", ua)
+	if strings.Contains(ua, "Chrome") {
+		userKey = "chrome-users"
+	}
+	log.Println("user-key: ", userKey)
+	user := lduser.NewUserBuilder(userKey).
+		Build()
+
+	return user
 }
