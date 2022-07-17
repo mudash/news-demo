@@ -29,7 +29,7 @@ free API key. You will need this key to retrieve the news items.
 - Clone this repository to your filesystem.
 
 ```bash
-$ git clone https://github.com/Freshman-tech/news-demo
+$ git clone https://github.com/mudash/news-demo
 ```
 
 - Rename the `.env.example` file to `.env` and enter your News API Key.
