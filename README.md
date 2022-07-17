@@ -8,9 +8,9 @@ looks like:
 
 ![demo](https://ik.imagekit.io/freshman/news-demo_MrYio9GKlzSi.png)
 
-To use this web application you simply have to enter your search term and hit enter. Results of new itesm related to your search term are displayed in pages. By default 50 line items are displayed on a single page. Number of pages are calculated based on total results returned and number of news items allowed on a single page.
+To use this web application you simply have to enter your search term and hit enter. Results of new items related to your search term are displayed in pages. By default 50 line items are displayed on a single page. Number of pages are calculated based on total results returned and number of news items allowed on a single page.
 
-We are demonstrating a new feature here for Chrome users to have only 10 results per page. For all other users, default behavior of 50 pages stays intact. This implementation uses Feature Flags with Launch Darkly to make a decision how many items to be displayed on a single page. It also uses User Segmentation functionality of Launch Darkly to segment the users into Chrome and Non-Chrome users for implementation of targeting (Bonus point!)
+I am demonstrating a new feature here for Chrome users to have only 10 results per page. For all other users, default behavior of 50 items per page stays intact. This implementation uses Feature Flags with Launch Darkly to make a decision for how many items to be displayed on a single page. It also uses User Segmentation functionality of Launch Darkly to segment the users into Chrome and Non-Chrome users for implementation of targeting (Bonus point!)
 
 
 
